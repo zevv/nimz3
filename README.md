@@ -3,7 +3,7 @@ First try for a Nim binding for the Z3 theorem prover [https://github.com/Z3Prov
 
 Example:
 
-```
+```nim
 z3:
   let x = Int("x")
   let y = Int("y")
