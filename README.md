@@ -15,4 +15,12 @@ z3:
     echo $model
 ```
 
-More examples in the tests directory
+Answer:
+
+```
+z -> (- 2)
+y -> (- 2)
+x -> 1
+```
+
+More examples in the tests directory, run with `nimble test`
