@@ -29,3 +29,8 @@ x -> 1
 ```
 
 More examples in the tests directory, run with `nimble test`.
+
+Some helpful documents and tutorials about Z3:
+
+* [Z3 - guide](https://rise4fun.com/z3/tutorialcontent/guide)
+* [Programming Z3](https://theory.stanford.edu/~nikolaj/programmingz3.html)

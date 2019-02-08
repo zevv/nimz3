@@ -242,6 +242,7 @@ proc Z3_mk_int*(c: Z3_context,v: cint,ty: Z3_sort): Z3_ast {.importc: "Z3_mk_int
 proc Z3_mk_unsigned_int*(c: Z3_context,v: cuint,ty: Z3_sort): Z3_ast {.importc: "Z3_mk_unsigned_int", dynlib: libz3.}
 proc Z3_mk_int64*(c: Z3_context,v: clonglong,ty: Z3_sort): Z3_ast {.importc: "Z3_mk_int64", dynlib: libz3.}
 proc Z3_mk_unsigned_int64*(c: Z3_context,v: culonglong,ty: Z3_sort): Z3_ast {.importc: "Z3_mk_unsigned_int64", dynlib: libz3.}
+proc Z3_mk_exists*(c: Z3_context,weight: cuint, num_patterns: cuint, patterns: ptr Z3_pattern, num_decls: cuint, sorts: ptr Z3_sort, decl_names: ptr Z3_symbol, body: Z3_ast): Z3_ast {.importc: "Z3_mk_exists", dynlib: libz3.}
 proc Z3_mk_bound*(c: Z3_context,index: cuint,ty: Z3_sort): Z3_ast {.importc: "Z3_mk_bound", dynlib: libz3.}
 proc Z3_get_symbol_kind*(c: Z3_context,s: Z3_symbol): Z3_symbol_kind {.importc: "Z3_get_symbol_kind", dynlib: libz3.}
 proc Z3_get_symbol_int*(c: Z3_context,s: Z3_symbol): cint {.importc: "Z3_get_symbol_int", dynlib: libz3.}
