@@ -1,9 +1,13 @@
 
-First try for a Nim binding for the Z3 theorem prover [https://github.com/Z3Prover/z3]
+# Nim Z3
+
+First try for a Nim binding for the [Z3 theorem prover](https://github.com/Z3Prover/z3)
+
+Most of Z3 is still missing, but basic boolean and integer solving is working. The API uses template magic to hide Z3 contexts and allows normal Nim syntax for defining Z3 model assertions.
 
 Example:
 
-```
+```nim
 z3:
   let x = Int("x")
   let y = Int("y")
@@ -15,4 +19,12 @@ z3:
     echo $model
 ```
 
-More examples in the tests directory
+Answer:
+
+```
+z -> (- 2)
+y -> (- 2)
+x -> 1
+```
+
+More examples in the tests directory, run with `nimble test`.
