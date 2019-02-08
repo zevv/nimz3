@@ -15,7 +15,7 @@ suite "z3":
       let s = Solver()
       s.assert (x and y) or (not x and y)
       s.with_model:
-        echo $model
+        echo model
 
   test "tie or shirt?":
     z3:
@@ -25,7 +25,7 @@ suite "z3":
       s.assert (not tie) or shirt
       s.assert (not tie) or not(shirt)
       s.with_model:
-        echo $model
+        echo model
 
 
   test "math school problem":
@@ -38,7 +38,7 @@ suite "z3":
       s.assert 2 * x - 2 * y + 4 * z == -2
       s.assert x * -1 + y / 2 - z == 0
       s.with_model:
-        echo $model
+        echo model
 
   test "XKCD restaurant order":
 
@@ -55,7 +55,7 @@ suite "z3":
       s.assert a<100 and b<100 and c<100 and d<100 and e<100 and f<100
       s.assert a>=0 and b>=0 and c>=0 and d>=0 and e>=0 and f>=0
       s.with_model:
-        echo $model
+        echo model
 
   test "sudoku":
 

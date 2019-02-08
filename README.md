@@ -12,11 +12,12 @@ z3:
   let x = Int("x")
   let y = Int("y")
   let z = Int("z")
-  assert 3 * x + 2 * y - z == 1
-  assert 2 * x - 2 * y + 4 * z == -2
-  assert x * -1 + y / 2 - z == 0
-  check_and_get_model:
-    echo $model
+  let s = Solver()
+  s.assert 3 * x + 2 * y - z == 1
+  s.assert 2 * x - 2 * y + 4 * z == -2
+  s.assert x * -1 + y / 2 - z == 0
+  s.with_model:
+    echo model
 ```
 
 Answer:
