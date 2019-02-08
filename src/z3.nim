@@ -1,5 +1,5 @@
 
-import z3_api
+import z3/z3_api
 
 export Z3_ast
 

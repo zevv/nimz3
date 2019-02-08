@@ -1,7 +1,6 @@
 
 import unittest
-import nimz3pkg/z3
-import nimz3pkg/z3_api
+import z3
 
 suite "z3":
 
