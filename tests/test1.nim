@@ -1,4 +1,3 @@
-
 import unittest
 import z3
 
@@ -60,16 +59,17 @@ suite "z3":
 
     # "Extreme" sudoku: http://www.sudokuwiki.org/Weekly_Sudoku.asp?puz=28
 
+    let · = 0
     let sudoku = [
-      [ 6, 0, 0, 0, 0, 8, 9, 4, 0 ],
-      [ 9, 0, 0, 0, 0, 6, 1, 0, 0 ],
-      [ 0, 7, 0, 0, 4, 0, 0, 0, 0 ],
-      [ 2, 0, 0, 6, 1, 0, 0, 0, 0 ],
-      [ 0, 0, 0, 0, 0, 0, 2, 0, 0 ],
-      [ 0, 8, 9, 0, 0, 2, 0, 0, 0 ],
-      [ 0, 0, 0, 0, 6, 0, 0, 0, 5 ],
-      [ 0, 0, 0, 0, 0, 0, 0, 3, 0 ],
-      [ 8, 0, 0, 0, 0, 1, 6, 0, 0 ],
+      [ ·, ·, ·, ·, ·, 8, 9, 4, · ],
+      [ 9, ·, ·, ·, ·, 6, 1, ·, · ],
+      [ ·, 7, ·, ·, 4, ·, ·, ·, · ],
+      [ 2, ·, ·, 6, 1, ·, ·, ·, · ],
+      [ ·, ·, ·, ·, ·, ·, 2, ·, · ],
+      [ ·, 8, 9, ·, ·, 2, ·, ·, · ],
+      [ ·, ·, ·, ·, 6, ·, ·, ·, 5 ],
+      [ ·, ·, ·, ·, ·, ·, ·, 3, · ],
+      [ 8, ·, ·, ·, ·, 1, 6, ·, · ],
     ]
 
     z3:
@@ -81,7 +81,7 @@ suite "z3":
       for y, row in sudoku.pairs():
         for x, v in row.pairs():
           let c = Int($x & "," & $y)
-          cs[x][y] = c
+          cs[y][x] = c
           if v != 0:
             s.assert c == v
           else:
@@ -89,13 +89,14 @@ suite "z3":
 
       # Each row and col contains each digit only once
 
+      for row in cs:
+        s.assert distinc row
+
       for y in 0..8:
         var col: seq[Z3_ast]
-        let row = cs[y]
         for x in 0..8:
           col.add cs[x][y]
         s.assert distinc(col)
-        s.assert distinc(row)
       
       # Each 3x3 square contains each digit only once
 
@@ -107,14 +108,13 @@ suite "z3":
               sq.add cs[x+dx][y+dy]
           s.assert distinc sq
 
-      # Get and print solution
+      # Get model and print solution
 
       s.with_model:
-
-        for y in 0..8:
-          for x in 0..8:
+        for row in cs:
+          for c in row:
             var v: Z3_ast
-            stdout.write eval(cs[x][y]) & " "
+            stdout.write eval(c) & " "
           stdout.write "\n"
 
 # vim: ft=nim

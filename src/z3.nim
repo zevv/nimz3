@@ -127,13 +127,13 @@ template z3*(code: untyped) =
     let cfg = Z3_mk_config()
     Z3_set_param_value(cfg, "model", "true");
     let ctx {.inject.} = Z3_mk_context(cfg)
+    Z3_del_config(cfg)
     Z3_set_error_handler(ctx, on_err)
     g_ctx = ctx
 
     block:
       code
 
-    Z3_del_config(cfg)
     g_ctx = nil
 
 
