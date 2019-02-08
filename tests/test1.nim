@@ -1,6 +1,7 @@
 import unittest
 import z3
 
+
 suite "z3":
 
   test "demorgan":
@@ -12,7 +13,7 @@ suite "z3":
       echo exp
       let s = Solver()
       s.assert (x and y) or (not x and y)
-      s.with_model:
+      s.check_model:
         echo model
 
   test "tie or shirt?":
@@ -22,7 +23,7 @@ suite "z3":
       let s = Solver()
       s.assert (not tie) or shirt
       s.assert (not tie) or not(shirt)
-      s.with_model:
+      s.check_model:
         echo model
 
 
@@ -35,7 +36,8 @@ suite "z3":
       s.assert 3 * x + 2 * y - z == 1
       s.assert 2 * x - 2 * y + 4 * z == -2
       s.assert x * -1 + y / 2 - z == 0
-      s.with_model:
+      echo s
+      s.check_model:
         echo model
 
   test "XKCD restaurant order":
@@ -52,7 +54,7 @@ suite "z3":
       s.assert a*215 + b*275 + c*335 + d*355 + e*420 + f*580 == 1505
       s.assert a<100 and b<100 and c<100 and d<100 and e<100 and f<100
       s.assert a>=0 and b>=0 and c>=0 and d>=0 and e>=0 and f>=0
-      s.with_model:
+      s.check_model:
         echo model
 
   test "sudoku":
@@ -110,12 +112,35 @@ suite "z3":
 
       # Get model and print solution
 
-      s.with_model:
+      s.check_model:
         for row in cs:
           for c in row:
             var v: Z3_ast
             stdout.write eval(c) & " "
           stdout.write "\n"
+
+  test "scopes":
+    z3:
+      let x = Int "x"
+      let y = Int "y"
+      let z = Int "z"
+      let s = Solver()
+      s.push:
+        s.assert x + y == 10
+        s.assert x + y * 2 == 20
+        echo s.check
+      s.push:
+        s.assert 3 * x + y == 10
+        s.assert 2 * x + 2 * y == 21
+        echo s.check
+
+  test "simplify":
+    z3:
+      let x = Int "x"
+      let y = Int "y"
+      let e =  x + 2 * y + 3 * x - y - y
+      echo e
+      echo simplify e
 
 # vim: ft=nim
 

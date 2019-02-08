@@ -26,6 +26,7 @@ template Bool*(name: string): Z3_ast = mk_var(name, Z3_mk_bool_sort(ctx))
 template Int*(name: string): Z3_ast = mk_var(name, Z3_mk_int_sort(ctx))
 template Float*(name: string): Z3_ast = mkvar(name, Z3_mk_fpa_sort_double(ctx))
 
+
 # Z3 type converters. These rely on an implicit global state, I have no clue
 # how to avoid this
 
@@ -47,6 +48,8 @@ template `$`*(v: Z3_ast): string =
 template `$`*(m: Z3_model): string =
   $Z3_model_to_string(ctx, m)
 
+template `$`*(m: Z3_solver): string =
+  $Z3_solver_to_string(ctx, m)
 
 # Basic operations
 
@@ -67,6 +70,12 @@ template `mod`*(v1, v2: Z3_ast): Z3_ast = Z3_mk_mod(ctx, v1, v2)
 template distinc*(vs: varargs[Z3_ast]): Z3_ast = vararg_helper(ctx, Z3_mk_distinct, vs)
 
 
+# Misc
+
+template simplify*(s: Z3_ast): Z3_ast =
+  Z3_simplify(ctx, s)
+
+
 # Solver
 
 template Solver*(): Z3_solver = Z3_mk_solver(ctx)
@@ -80,7 +89,13 @@ template check*(s: Z3_solver): Z3_lbool =
 template get_model*(s: Z3_Solver): Z3_model =
   Z3_solver_get_model(ctx, s)
 
-template with_model*(s: Z3_solver, code: untyped) =
+template push*(s: Z3_Solver, code: untyped) =
+  Z3_solver_push(ctx, s)
+  block:
+    code
+  Z3_solver_pop(ctx, s, 1)
+
+template check_model*(s: Z3_solver, code: untyped) =
   if Z3_solver_check(ctx, s) == Z3_L_TRUE:
     let model {.inject.} = Z3_solver_get_model(ctx, s)
     code
