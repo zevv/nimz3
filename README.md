@@ -3,6 +3,8 @@
 
 Early stage/alpha Nim binding for the [Z3 theorem prover](https://github.com/Z3Prover/z3)
 
+Module documentation is available [here](http://htmlpreview.github.io/?https://github.com/zevv/nimz3/blob/master/src/z3.html)
+
 This is still a work in progress and a lot of Z3 is still missing, but the most
 important basics are available:
 

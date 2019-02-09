@@ -141,5 +141,15 @@ suite "z3":
       echo e
       echo simplify e
 
+  test "exceptions":
+    z3:
+      let x = Int "x"
+      let y = Bool "y"
+      let s = Solver()
+      try:
+        s.assert x == y
+      except Z3Exception:
+        echo "Z3 exception: ", getCurrentExceptionMsg()
+
 # vim: ft=nim
 
