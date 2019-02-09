@@ -1,7 +1,7 @@
 
 # Nim Z3
 
-> "Z3 is a cat with a funny hat"
+> "_Z3 is a cat with a funny hat_"
 > -TheLemonMan
 
 Early stage/alpha Nim binding for the [Z3 theorem prover](https://github.com/Z3Prover/z3)
