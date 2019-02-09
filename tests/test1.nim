@@ -115,7 +115,6 @@ suite "z3":
       s.check_model:
         for row in cs:
           for c in row:
-            var v: Z3_ast
             stdout.write eval(c) & " "
           stdout.write "\n"
 

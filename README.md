@@ -37,10 +37,6 @@ x -> 1
 
 More examples are available in the tests directory, run with `nimble test`.
 
-The current implementation uses converters and some global state to allow
-mixing nim native types and Z3_ast nodes. I don't like this at all, so this
-will require some reworking.
-
 Some helpful documents and tutorials about Z3:
 
 * [Z3 - guide](https://rise4fun.com/z3/tutorialcontent/guide)
