@@ -28,6 +28,7 @@
 ## For more info on Z3 check the official guide at https://rise4fun.com/z3/tutorialcontent/guide
 
 import z3/z3_api
+import strutils
 
 export Z3_ast
 
@@ -55,6 +56,25 @@ template Int*(name: string): Z3_ast =
 template Float*(name: string): Z3_ast =
   ## Create a Z3 constant of the type Float. `(declare-const a Float)`
   mkvar(name, Z3_mk_fpa_sort_double(ctx))
+
+
+# Convert Z3_AST to Nim type after model check
+
+template toBool*(v: Z3_ast): bool =
+  ## Convert the (solved) Z3_ast node to a Nim bool
+  var r: Z3_ast
+  if Z3_eval(ctx, model, v, addr r):
+    parseBool $r
+  else:
+    raise newException(Z3Exception, "Can not convert to int")
+
+template toInt*(v: Z3_ast): int =
+  ## Convert the (solved) Z3_ast node to a Nim int
+  var r: Z3_ast
+  if Z3_eval(ctx, model, v, addr r):
+    parseInt $r
+  else:
+    raise newException(Z3Exception, "Can not convert to int")
 
 
 # Stringifications
@@ -213,7 +233,7 @@ template binop_rm[T](name: untyped, fn: untyped) =
 template varop[T](name: untyped, fn: untyped) =
   # Varargs operation, reduced to binary operation
   template name*(v1: Z3_ast, v2: Z3_ast): Z3_ast = vararg_helper(ctx, fn, v1, v2)
-  template name*(v1: Z3_ast, v2: T): Z3_ast = vararg_helper(ctx, fn, v1, to_z3(ctx, v2))
+  template name*(v1: Z3_ast, v2: T): Z3_ast = vararg_helper(ctx, fn, v1, to_z3[T](ctx, v2))
   template name*(v1: T, v2: Z3_ast): Z3_ast = vararg_helper(ctx, fn, to_z3(ctx, v1), v2)
 
 
@@ -229,7 +249,9 @@ binop[bool](`xor`, Z3_mk_xor)
 
 unop[int](`-`, Z3_mk_unary_minus)
 binop[int](`<`, Z3_mk_lt)
+binop[int](`>`, Z3_mk_gt)
 binop[int](`<=`, Z3_mk_le)
+binop[int](`>=`, Z3_mk_ge)
 binop[int](`/`, Z3_mk_div)
 binop[int](`mod`, Z3_mk_mod)
 binop[int](`==`, Z3_mk_eq)
@@ -243,7 +265,9 @@ varop[int](`or`, Z3_mk_or)
 # Floating point operations (experimental)
 
 binop[float](`<`, Z3_mk_fpa_lt)
-binop[float](`<=`, Z3_mk_fpa_le)
+binop[float](`>`, Z3_mk_fpa_gt)
+binop[float](`<=`, Z3_mk_fpa_leq)
+binop[float](`>=`, Z3_mk_fpa_geq)
 binop[float](`==`, Z3_mk_fpa_eq)
 binop[float](max, Z3_mk_fpa_max)
 binop[float](min, Z3_mk_fpa_min)
