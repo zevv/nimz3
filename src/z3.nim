@@ -213,24 +213,24 @@ proc to_z3(ctx: Z3_context, v: float): Z3_ast =
 proc vararg_helper[T](ctx: Z3_context, fn: T, vs: varargs[Z3_ast]): Z3_ast =
   fn(ctx, vs.len.cuint, unsafeAddr(vs[0]))
 
-template unop[T](name: untyped, fn: untyped) =
+template unop(T: type, name: untyped, fn: untyped) =
   # Uni operation
   template name*(v: Z3_ast): Z3_ast = fn(ctx, v)
   #template name*(v: T): Z3_ast = fn(ctx, to_z3(ctx, v))
 
-template binop[T](name: untyped, fn: untyped) =
+template binop(T: type, name: untyped, fn: untyped) =
   # Binary operation
   template name*(v1: Z3_ast, v2: Z3_ast): Z3_ast = fn(ctx, v1, v2)
   template name*(v1: Z3_ast, v2: T): Z3_ast = fn(ctx, v1, to_z3(ctx, v2))
   template name*(v1: T, v2: Z3_ast): Z3_ast = fn(ctx, to_z3(ctx, v1), v2)
 
-template binop_rm[T](name: untyped, fn: untyped) =
+template binop_rm(T: type, name: untyped, fn: untyped) =
   # Binary operation with rounding mode
   template name*(v1: Z3_ast, v2: Z3_ast): Z3_ast = fn(ctx, fpa_rm, v1, v2)
   template name*(v1: Z3_ast, v2: T): Z3_ast = fn(ctx, fpa_rm,v1, to_z3(ctx, v2))
   template name*(v1: T, v2: Z3_ast): Z3_ast = fn(ctx, fpa_rm, to_z3(ctx, v1), v2)
 
-template varop[T](name: untyped, fn: untyped) =
+template varop(T: type, name: untyped, fn: untyped) =
   # Varargs operation, reduced to binary operation
   template name*(v1: Z3_ast, v2: Z3_ast): Z3_ast = vararg_helper(ctx, fn, v1, v2)
   template name*(v1: Z3_ast, v2: T): Z3_ast = vararg_helper(ctx, fn, v1, to_z3[T](ctx, v2))
@@ -239,42 +239,42 @@ template varop[T](name: untyped, fn: untyped) =
 
 # Boolean operations
 
-unop[bool](`not`, Z3_mk_not)
-binop[bool](`==`, Z3_mk_eq)
-varop[bool](`or`, Z3_mk_or)
-varop[bool](`and`, Z3_mk_and)
-binop[bool](`xor`, Z3_mk_xor)
+unop(bool, `not`, Z3_mk_not)
+binop(bool, `==`, Z3_mk_eq)
+binop(bool, `xor`, Z3_mk_xor)
+varop(bool, `or`, Z3_mk_or)
+varop(bool, `and`, Z3_mk_and)
 
 # Integer operations
 
-unop[int](`-`, Z3_mk_unary_minus)
-binop[int](`<`, Z3_mk_lt)
-binop[int](`>`, Z3_mk_gt)
-binop[int](`<=`, Z3_mk_le)
-binop[int](`>=`, Z3_mk_ge)
-binop[int](`/`, Z3_mk_div)
-binop[int](`mod`, Z3_mk_mod)
-binop[int](`==`, Z3_mk_eq)
-binop[int](`<->`, Z3_mk_iff)
-varop[int](`+`, Z3_mk_add)
-varop[int](`-`, Z3_mk_sub)
-varop[int](`*`, Z3_mk_mul)
-varop[int](`and`, Z3_mk_and)
-varop[int](`or`, Z3_mk_or)
+unop(int, `-`, Z3_mk_unary_minus)
+binop(int, `<`, Z3_mk_lt)
+binop(int, `>`, Z3_mk_gt)
+binop(int, `<=`, Z3_mk_le)
+binop(int, `>=`, Z3_mk_ge)
+binop(int, `/`, Z3_mk_div)
+binop(int, `mod`, Z3_mk_mod)
+binop(int, `==`, Z3_mk_eq)
+binop(int, `<->`, Z3_mk_iff)
+varop(int, `+`, Z3_mk_add)
+varop(int, `-`, Z3_mk_sub)
+varop(int, `*`, Z3_mk_mul)
+varop(int, `and`, Z3_mk_and)
+varop(int, `or`, Z3_mk_or)
 
 # Floating point operations (experimental)
 
-binop[float](`<`, Z3_mk_fpa_lt)
-binop[float](`>`, Z3_mk_fpa_gt)
-binop[float](`<=`, Z3_mk_fpa_leq)
-binop[float](`>=`, Z3_mk_fpa_geq)
-binop[float](`==`, Z3_mk_fpa_eq)
-binop[float](max, Z3_mk_fpa_max)
-binop[float](min, Z3_mk_fpa_min)
-binop_rm[float](`*`, Z3_mk_fpa_mul)
-binop_rm[float](`/`, Z3_mk_fpa_div)
-binop_rm[float](`+`, Z3_mk_fpa_add)
-binop_rm[float](`-`, Z3_mk_fpa_sub)
+binop(float, `<`, Z3_mk_fpa_lt)
+binop(float, `>`, Z3_mk_fpa_gt)
+binop(float, `<=`, Z3_mk_fpa_leq)
+binop(float, `>=`, Z3_mk_fpa_geq)
+binop(float, `==`, Z3_mk_fpa_eq)
+binop(float, max, Z3_mk_fpa_max)
+binop(float, min, Z3_mk_fpa_min)
+binop_rm(float, `*`, Z3_mk_fpa_mul)
+binop_rm(float, `/`, Z3_mk_fpa_div)
+binop_rm(float, `+`, Z3_mk_fpa_add)
+binop_rm(float, `-`, Z3_mk_fpa_sub)
 
 # Generic operations
 
