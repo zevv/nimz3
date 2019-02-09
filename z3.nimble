@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.0"
+version       = "0.1.1"
 author        = "Ico Doornekamp"
 description   = "Nim Z3 theorem prover bindings"
 license       = "MIT"
