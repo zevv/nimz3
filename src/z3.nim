@@ -108,7 +108,7 @@ template Int*(name: string): Z3_ast_int =
 
 template Bv*(name: string, sz: int): Z3_ast_bv =
   ## Create a Z3 constant of the type BV with a size of `sz` bits.
-  mk_var(name, Z3_mk_bv_sort(ctx, sz)).Z3_ast_bv
+  mk_var(name, Z3_mk_bv_sort(ctx, sz.cuint)).Z3_ast_bv
 
 template Float*(name: string): Z3_ast_fpa =
   ## Create a Z3 constant of the type Float.
@@ -130,6 +130,10 @@ template `$`*(m: Z3_model): string =
 template `$`*(m: Z3_solver): string =
   ## Create a string representation of the Z3 solver
   $Z3_solver_to_string(ctx, m)
+
+template `$`*(m: Z3_pattern): string =
+  ## Create a string representation of the Z3 pattern
+  $Z3_pattern_to_string(ctx, m)
 
 
 
@@ -328,7 +332,7 @@ binop(`mod`,  Z3_ast_bv,   Z3_ast_bv,   Z3_mk_bvsmod, helper_bin)
 binop(`nor`,  Z3_ast_bv,   Z3_ast_bv,   Z3_mk_bvnor,  helper_bin)
 binop(`or`,   Z3_ast_bv,   Z3_ast_bv,   Z3_mk_bvor ,  helper_bin)
 binop(`shl`,  Z3_ast_bv,   Z3_ast_bv,   Z3_mk_bvshl,  helper_bin)
-binop(`shr`,  Z3_ast_bv,   Z3_ast_bv,   Z3_mk_bvshl,  helper_bin)
+binop(`shr`,  Z3_ast_bv,   Z3_ast_bv,   Z3_mk_bvlshr, helper_bin)
 binop(`xnor`, Z3_ast_bv,   Z3_ast_bv,   Z3_mk_bvxnor, helper_bin)
 binop(`xor`,  Z3_ast_bv,   Z3_ast_bv,   Z3_mk_bvxor,  helper_bin)
 binop(`>=`,   Z3_ast_bv,   Z3_ast_bool, Z3_mk_bvsge,  helper_bin)
@@ -389,9 +393,24 @@ proc vararg_helper[T](ctx: Z3_context, fn: T, vs: varargs[Z3_ast_any]): Z3_ast =
 template distinc*[T: Z3_ast_bool|Z3_ast_bv|Z3_ast_int](vs: varargs[T]): Z3_ast_bool =
   vararg_helper(ctx, Z3_mk_distinct, vs).Z3_ast_bool
 
-template if_then_else*[T](v1: bool|Z3_ast_bool, v2, v3: T): T =
+template ite*[T](v1: bool|Z3_ast_bool, v2, v3: T): T =
   T(Z3_mk_ite(ctx, to_Z3_ast(ctx, v1), to_Z3_ast(ctx, v2), to_Z3_ast(ctx, v3)))
 
+template exists*(vs: openarray[Z3_ast_any], body: Z3_ast_bool): Z3_ast_bool =
+  var bound: seq[Z3_app]
+  for v in vs: bound.add Z3_to_app(ctx, v.Z3_ast)
+  Z3_mk_exists_const(ctx, 0, bound.len.cuint, addr(bound[0]), 0, nil, body.Z3_ast).Z3_ast_bool
+
+template ∃*(vs: openarray[Z3_ast_any], body: Z3_ast_bool): Z3_ast_bool =
+  exists(vs, body)
+
+template forall*(vs: openarray[Z3_ast_any], body: Z3_ast_bool): Z3_ast_bool =
+  var bound: seq[Z3_app]
+  for v in vs: bound.add Z3_to_app(ctx, v.Z3_ast)
+  Z3_mk_forall_const(ctx, 0, bound.len.cuint, addr(bound[0]), 0, nil, body.Z3_ast).Z3_ast_bool
+
+template ∀*(vs: openarray[Z3_ast_any], body: Z3_ast_bool): Z3_ast_bool =
+  forall(vs, body)
 
 # vim: ft=nim
 

@@ -741,4 +741,6 @@ proc Z3_fpa_get_numeral_exponent_string*(c: Z3_context,t: Z3_ast): Z3_string {.i
 proc Z3_fpa_get_numeral_exponent_int64*(c: Z3_context,t: Z3_ast,n: ptr clonglong): Z3_bool {.importc: "Z3_fpa_get_numeral_exponent_int64", dynlib: libz3.}
 proc Z3_mk_fpa_to_ieee_bv*(c: Z3_context,t: Z3_ast): Z3_ast {.importc: "Z3_mk_fpa_to_ieee_bv", dynlib: libz3.}
 proc Z3_mk_fpa_to_fp_int_real*(c: Z3_context,rm: Z3_ast,exp: Z3_ast,sig: Z3_ast,s: Z3_sort): Z3_ast {.importc: "Z3_mk_fpa_to_fp_int_real", dynlib: libz3.}
-
+proc Z3_mk_exists_const*(c: Z3_context, weight: cuint, num_bound: cuint, bound: ptr Z3_app, num_patterns: cuint, patterns: ptr Z3_pattern, body: Z3_ast): Z3_ast {.importc: "Z3_mk_exists_const", dynlib: libz3.}
+proc Z3_mk_forall_const*(c: Z3_context, weight: cuint, num_bound: cuint, bound: ptr Z3_app, num_patterns: cuint, patterns: ptr Z3_pattern, body: Z3_ast): Z3_ast {.importc: "Z3_mk_forall_const", dynlib: libz3.}
+proc Z3_mk_pattern*(c: Z3_context, num_patterns: cuint, terms: ptr Z3_ast): Z3_pattern {.importc: "Z3_mk_pattern", dynlib: libz3.}
