@@ -39,6 +39,20 @@ type
     Z3_DEC_REF_ERROR = 11,
     Z3_EXCEPTION = 12,
 
+  Z3_sort_kind* = enum
+    Z3_UNINTERPRETED_SORT,
+    Z3_BOOL_SORT,
+    Z3_INT_SORT,
+    Z3_REAL_SORT,
+    Z3_BV_SORT,
+    Z3_ARRAY_SORT,
+    Z3_DATATYPE_SORT,
+    Z3_RELATION_SORT,
+    Z3_FINITE_DOMAIN_SORT,
+    Z3_FLOATING_POINT_SORT,
+    Z3_ROUNDING_MODE_SORT,
+    Z3_UNKNOWN_SORT = 1000
+
 const
   libz3 = "libz3.so"
   STDC_PREDEF_H* = 1
@@ -290,6 +304,7 @@ proc Z3_is_eq_ast*(c: Z3_context,t1: Z3_ast,t2: Z3_ast): Z3_bool {.importc: "Z3_
 proc Z3_get_ast_id*(c: Z3_context,t: Z3_ast): cuint {.importc: "Z3_get_ast_id", dynlib: libz3.}
 proc Z3_get_ast_hash*(c: Z3_context,a: Z3_ast): cuint {.importc: "Z3_get_ast_hash", dynlib: libz3.}
 proc Z3_get_sort*(c: Z3_context,a: Z3_ast): Z3_sort {.importc: "Z3_get_sort", dynlib: libz3.}
+proc Z3_get_sort_kind*(c: Z3_context, t: Z3_sort): Z3_sort_kind {.importc: "Z3_get_sort_kind", dynlib: libz3.}
 proc Z3_is_well_sorted*(c: Z3_context,t: Z3_ast): Z3_bool {.importc: "Z3_is_well_sorted", dynlib: libz3.}
 proc Z3_get_bool_value*(c: Z3_context,a: Z3_ast): Z3_lbool {.importc: "Z3_get_bool_value", dynlib: libz3.}
 proc Z3_is_app*(c: Z3_context,a: Z3_ast): Z3_bool {.importc: "Z3_is_app", dynlib: libz3.}

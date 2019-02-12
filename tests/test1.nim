@@ -76,7 +76,7 @@ suite "z3":
 
     z3:
       let s = Solver()
-      var cs: array[9, array[9, Z3_Ast]]
+      var cs: array[9, array[9, Z3_ast_int]]
 
       # Create sudoku cells
 
@@ -95,7 +95,7 @@ suite "z3":
         s.assert distinc row
 
       for y in 0..8:
-        var col: seq[Z3_ast]
+        var col: seq[Z3_ast_int]
         for x in 0..8:
           col.add cs[x][y]
         s.assert distinc(col)
@@ -104,7 +104,7 @@ suite "z3":
 
       for x in [0, 3, 6]:
         for y in [0, 3, 6]:
-          var sq: seq[Z3_ast]
+          var sq: seq[Z3_ast_int]
           for dx in 0..2:
             for dy in 0..2:
               sq.add cs[x+dx][y+dy]
@@ -115,17 +115,16 @@ suite "z3":
       s.check_model:
         for row in cs:
           for c in row:
-            stdout.write eval(c) & " "
+            stdout.write $eval(c) & " "
           stdout.write "\n"
 
   test "scopes":
     z3:
       let x = Int "x"
       let y = Int "y"
-      let z = Int "z"
       let s = Solver()
       s.push:
-        s.assert x + y == 10
+        s.assert -x + y == 10
         s.assert x + y * 2 == 20
         echo s.check
       s.push:
@@ -141,15 +140,17 @@ suite "z3":
       echo e
       echo simplify e
 
-  test "exceptions":
+  test "floating point":
     z3:
-      let x = Int "x"
-      let y = Bool "y"
+      let x = Float "x"
+      let y = Float "y"
       let s = Solver()
-      try:
-        s.assert x == y
-      except Z3Exception:
-        echo "Z3 exception: ", getCurrentExceptionMsg()
+      s.assert x * 2.0 == y
+      s.assert x == 15.0
+      s.check_model:
+        echo eval(x)
+        echo model
+
 
 # vim: ft=nim
 
