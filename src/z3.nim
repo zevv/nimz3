@@ -256,13 +256,16 @@ template z3*(code: untyped) =
 
 # Helpers to create a Nim value to the appropriate Z3_ast sort
 
-proc to_Z3_ast(ctx: Z3_context, v: bool, sort: Z3_sort): Z3_ast =
+proc to_Z3_ast(ctx: Z3_context, v: Z3_ast_any): Z3_ast =
+  v.Z3_ast
+
+proc to_Z3_ast(ctx: Z3_context, v: bool, sort: Z3_sort = nil): Z3_ast =
   if v: Z3_mk_true(ctx) else: Z3_mk_false(ctx)
 
-proc to_Z3_ast(ctx: Z3_context, v: int, sort: Z3_sort): Z3_ast =
+proc to_Z3_ast(ctx: Z3_context, v: int, sort: Z3_sort = nil): Z3_ast =
   Z3_mk_int(ctx, v.cint, sort)
 
-proc to_Z3_ast(ctx: Z3_context, v: float, sort: Z3_sort): Z3_ast =
+proc to_Z3_ast(ctx: Z3_context, v: float, sort: Z3_sort = nil): Z3_ast =
   Z3_mk_fpa_numeral_double(ctx, v.cdouble, sort)
 
 
@@ -299,7 +302,7 @@ template uniop(name: untyped, Tin, Tout: untyped, fn: untyped, helper: untyped) 
 
 template binop(name: untyped, Tin, Tout: untyped, fn: untyped, helper: untyped) =
 
-  template name*(a1: Tin, a2: Tin): Tout =
+  template name*(a1, a2: Tin): Tout =
     helper(ctx, fn, a1, a2).Tout
 
   template name*[T](a1: Tin, a2: T): Tout =
@@ -386,9 +389,8 @@ proc vararg_helper[T](ctx: Z3_context, fn: T, vs: varargs[Z3_ast_any]): Z3_ast =
 template distinc*[T: Z3_ast_bool|Z3_ast_bv|Z3_ast_int](vs: varargs[T]): Z3_ast_bool =
   vararg_helper(ctx, Z3_mk_distinct, vs).Z3_ast_bool
 
-template If*[T1, T2, T3](v1: T1, v2: T2, v3: T3): Z3_ast =
-  Z3_mk_ite(ctx, to_z3(ctx, v1), to_z3(ctx, v2), to_z3(ctx, v3))
-
+template if_then_else*[T](v1: bool|Z3_ast_bool, v2, v3: T): T =
+  T(Z3_mk_ite(ctx, to_Z3_ast(ctx, v1), to_Z3_ast(ctx, v2), to_Z3_ast(ctx, v3)))
 
 
 # vim: ft=nim

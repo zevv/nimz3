@@ -14,7 +14,8 @@ Docs:
 This is still a work in progress and a lot of Z3 is still missing, but the most
 important basics are available:
 
-* integer and boolean solving
+* bool, bit vector, int and float types
+* solving
 * optimization
 * simplification
 
