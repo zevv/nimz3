@@ -71,7 +71,8 @@
 ## For more info on Z3 check the official guide at https://rise4fun.com/z3/tutorialcontent/guide
 
 import z3/z3_api
-import strutils
+from strutils import parseFloat
+from math import pow
 
 export Z3_ast
 
@@ -222,7 +223,7 @@ template evalInt*(v: Z3_ast_any): int =
 
 template evalFloat*(v: Z3_ast_any): float =
   let ss = splitWhitespace $Z3_get_numeral_string(ctx, eval(v))
-  ss[0].parseFloat
+  ss[0].parseFloat * pow(2.0, ss[1].parseFloat)
 
 proc on_err(ctx: Z3_context, e: Z3_error_code) {.nimcall.} =
   let msg = $Z3_get_error_msg_ex(ctx, e)
@@ -279,13 +280,19 @@ template helper_var(ctx: Z3_context, fn: untyped, v1, v2: Z3_ast_any): Z3_ast =
 template helper_bin_fpa(ctx: Z3_context, fn: untyped, v1, v2: Z3_ast_any): Z3_ast =
   fn(ctx, fpa_rm, v1.Z3_ast, v2.Z3_ast)
 
+template helper_uni(ctx: Z3_context, fn: untyped, v: Z3_ast_any): Z3_ast =
+  fn(ctx, v.Z3_ast)
+
+template helper_uni_fpa(ctx: Z3_context, fn: untyped, v: Z3_ast_any): Z3_ast =
+  fn(ctx, fpa_rm, v.Z3_ast)
+
 
 # Generator templates for an unary operators
 
-template uniop(name: untyped, Tin, Tout: untyped, fn: untyped) =
+template uniop(name: untyped, Tin, Tout: untyped, fn: untyped, helper: untyped) =
 
   template name*(a: Tin): Tout =
-    fn(ctx, a.Z3_ast).Tout
+    helper(ctx, fn, a.Z3_ast).Tout
 
 
 # Generator templates for an binary operators
@@ -309,7 +316,7 @@ binop(`or`,  Z3_ast_bool, Z3_ast_bool, Z3_mk_or,  helper_var)
 binop(`xor`, Z3_ast_bool, Z3_ast_bool, Z3_mk_xor, helper_bin)
 binop(`==`,  Z3_ast_bool, Z3_ast_bool, Z3_mk_eq,  helper_bin)
 binop(`<->`, Z3_ast_bool, Z3_ast_bool, Z3_mk_iff, helper_bin)
-uniop(`not`, Z3_ast_bool, Z3_ast_bool, Z3_mk_not)
+uniop(`not`, Z3_ast_bool, Z3_ast_bool, Z3_mk_not, helper_uni)
 
 # Bit vector operators and functions
 
@@ -337,8 +344,8 @@ binop(`/`,    Z3_ast_bv,   Z3_ast_bv,   Z3_mk_bvsdiv, helper_bin)
 binop(`-`,    Z3_ast_bv,   Z3_ast_bv,   Z3_mk_bvsub,  helper_bin)
 binop(`/%`,   Z3_ast_bv,   Z3_ast_bv,   Z3_mk_bvudiv, helper_bin)
 binop(`&`,    Z3_ast_bv,   Z3_ast_bv,   Z3_mk_concat, helper_bin)
-uniop(`not`,  Z3_ast_bv,   Z3_ast_bv,   Z3_mk_bvnot)
-uniop(`-`,    Z3_ast_bv,   Z3_ast_bv,   Z3_mk_bvneg)
+uniop(`not`,  Z3_ast_bv,   Z3_ast_bv,   Z3_mk_bvnot,  helper_uni)
+uniop(`-`,    Z3_ast_bv,   Z3_ast_bv,   Z3_mk_bvneg,  helper_uni)
 
 # Integer operators and functions
 
@@ -352,24 +359,25 @@ binop(`+`,   Z3_ast_int,  Z3_ast_int,  Z3_mk_add, helper_var)
 binop(`/`,   Z3_ast_int,  Z3_ast_int,  Z3_mk_div, helper_bin)
 binop(`*`,   Z3_ast_int,  Z3_ast_int,  Z3_mk_mul, helper_var)
 binop(`-`,   Z3_ast_int,  Z3_ast_int,  Z3_mk_sub, helper_var)
-uniop(`-`,   Z3_ast_int,  Z3_ast_int,  Z3_mk_unary_minus)
+uniop(`-`,   Z3_ast_int,  Z3_ast_int,  Z3_mk_unary_minus, helper_uni)
 
 # Floating point operators and functions
 
+binop(`==`,  Z3_ast_fpa,  Z3_ast_bool, Z3_mk_eq,       helper_bin)
+binop(`>=`,  Z3_ast_fpa,  Z3_ast_bool, Z3_mk_fpa_ge,   helper_bin)
+binop(`>`,   Z3_ast_fpa,  Z3_ast_bool, Z3_mk_fpa_gt,   helper_bin)
+binop(`<->`, Z3_ast_fpa,  Z3_ast_bool, Z3_mk_fpa_iff,  helper_bin)
+binop(`<=`,  Z3_ast_fpa,  Z3_ast_bool, Z3_mk_fpa_le,   helper_bin)
+binop(`<`,   Z3_ast_fpa,  Z3_ast_bool, Z3_mk_fpa_lt,   helper_bin)
+binop(`<->`, Z3_ast_fpa,  Z3_ast_bool, Z3_mk_iff,      helper_bin)
+binop(`+`,   Z3_ast_fpa,  Z3_ast_fpa,  Z3_mk_fpa_add,  helper_bin_fpa)
+binop(`/`,   Z3_ast_fpa,  Z3_ast_fpa,  Z3_mk_fpa_div,  helper_bin_fpa)
+binop(`*`,   Z3_ast_fpa,  Z3_ast_fpa,  Z3_mk_fpa_mul,  helper_bin_fpa)
+binop(`-`,   Z3_ast_fpa,  Z3_ast_fpa,  Z3_mk_fpa_sub,  helper_bin_fpa)
+uniop(abs,   Z3_ast_fpa,  Z3_ast_fpa,  Z3_mk_fpa_abs,  helper_uni)
+uniop(sqrt,  Z3_ast_fpa,  Z3_ast_fpa,  Z3_mk_fpa_sqrt, helper_uni_fpa)
+uniop(`-`,   Z3_ast_fpa,  Z3_ast_fpa,  Z3_mk_fpa_neg,  helper_uni)
 
-binop(`==`,  Z3_ast_fpa,  Z3_ast_bool, Z3_mk_eq,      helper_bin)
-binop(`>=`,  Z3_ast_fpa,  Z3_ast_bool, Z3_mk_fpa_ge,  helper_bin)
-binop(`>`,   Z3_ast_fpa,  Z3_ast_bool, Z3_mk_fpa_gt,  helper_bin)
-binop(`<->`, Z3_ast_fpa,  Z3_ast_bool, Z3_mk_fpa_iff, helper_bin)
-binop(`<=`,  Z3_ast_fpa,  Z3_ast_bool, Z3_mk_fpa_le,  helper_bin)
-binop(`<`,   Z3_ast_fpa,  Z3_ast_bool, Z3_mk_fpa_lt,  helper_bin)
-binop(`<->`, Z3_ast_fpa,  Z3_ast_bool, Z3_mk_iff,     helper_bin)
-binop(`+`,   Z3_ast_fpa,  Z3_ast_fpa,  Z3_mk_fpa_add, helper_bin_fpa)
-binop(`/`,   Z3_ast_fpa,  Z3_ast_fpa,  Z3_mk_fpa_div, helper_bin_fpa)
-binop(`*`,   Z3_ast_fpa,  Z3_ast_fpa,  Z3_mk_fpa_mul, helper_bin_fpa)
-binop(`-`,   Z3_ast_fpa,  Z3_ast_fpa,  Z3_mk_fpa_sub, helper_bin_fpa)
-uniop(abs,   Z3_ast_fpa,  Z3_ast_fpa,  Z3_mk_fpa_abs)
-uniop(`-`,   Z3_ast_fpa,  Z3_ast_fpa,  Z3_mk_fpa_neg)
 # Miscellaneous
 
 proc vararg_helper[T](ctx: Z3_context, fn: T, vs: varargs[Z3_ast_any]): Z3_ast =
