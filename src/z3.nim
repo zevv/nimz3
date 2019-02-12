@@ -280,8 +280,8 @@ template helper_var(ctx: Z3_context, fn: untyped, v1, v2: Z3_ast_any): Z3_ast =
 template helper_bin_fpa(ctx: Z3_context, fn: untyped, v1, v2: Z3_ast_any): Z3_ast =
   fn(ctx, fpa_rm, v1.Z3_ast, v2.Z3_ast)
 
-template helper_uni(ctx: Z3_context, fn: untyped, v: Z3_ast_any): Z3_ast =
-  fn(ctx, v.Z3_ast)
+template helper_uni(ctx: Z3_context, fn: untyped, v: Z3_ast): Z3_ast =
+  fn(ctx, v)
 
 template helper_uni_fpa(ctx: Z3_context, fn: untyped, v: Z3_ast_any): Z3_ast =
   fn(ctx, fpa_rm, v.Z3_ast)
