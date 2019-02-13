@@ -151,6 +151,25 @@ suite "z3":
         echo eval(x)
         echo model
 
+  test "forall":
+    z3:
+      let s = Solver()
+      let x = Int "x"
+      let y = Int "y"
+      s.assert y == 1
+      s.assert forall([x], x * y == x)
+      s.check_model:
+        echo model
+
+  test "exists":
+    z3:
+      let s = Solver()
+      let x = Int "x"
+      let y = Int "y"
+      s.assert y == 20
+      s.assert exists([x], x * y == 180)
+      s.check_model:
+        echo model
 
 # vim: ft=nim
 
