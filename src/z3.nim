@@ -131,6 +131,10 @@ template `$`*(m: Z3_solver): string =
   ## Create a string representation of the Z3 solver
   $Z3_solver_to_string(ctx, m)
 
+template `$`*(m: Z3_optimize): string =
+  ## Create a string representation of the Z3 optimizer
+  $Z3_optimize_to_string(ctx, m)
+
 template `$`*(m: Z3_pattern): string =
   ## Create a string representation of the Z3 pattern
   $Z3_pattern_to_string(ctx, m)
@@ -200,18 +204,36 @@ template Optimizer*(): Z3_optimize =
   ## Create a Z3 optimizer
   Z3_mk_optimize(ctx)
 
-template minimize*(o: Z3_optimize, e: Z3_ast) =
+template minimize*(o: Z3_optimize, e: Z3_ast_any) =
   ## Add a minimization constraint.
-  echo Z3_optimize_minimize(ctx, o, e)
+  echo Z3_optimize_minimize(ctx, o, e.Z3_ast)
 
-template maximize*(o: Z3_optimize, e: Z3_ast) =
+template maximize*(o: Z3_optimize, e: Z3_ast_any) =
   ## Add a maximization constraint.
-  echo Z3_optimize_maximize(ctx, o, e)
+  echo Z3_optimize_maximize(ctx, o, e.Z3_ast)
 
-template assert*(o: Z3_optimize, e: Z3_ast) =
+template assert*(o: Z3_optimize, e: Z3_ast_any) =
   ## Assert hard constraint to the optimization context.
-  Z3_optimize_assert(ctx, o, e)
+  Z3_optimize_assert(ctx, o, e.Z3_ast)
 
+template check*(s: Z3_optimize): Z3_lbool =
+  ## Check whether the assertions in a given optimize are consistent or not.
+  Z3_optimize_check(ctx, s)
+
+template get_model*(s: Z3_optimize): Z3_model =
+  ## Retrieve the model for the last optimize.check
+  Z3_optimize_get_model(ctx, s)
+
+template check_model*(s: Z3_optimize, code: untyped) =
+  if Z3_optimize_check(ctx, s) == Z3_L_TRUE:
+    let model {.inject.} = Z3_optimize_get_model(ctx, s)
+    code
+  else:
+    raise newException(Z3Exception, "UNSAT")
+
+#
+# Misc
+#
 
 template eval*(v: Z3_ast_any): Z3_ast =
   var r: Z3_ast

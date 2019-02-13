@@ -171,5 +171,27 @@ suite "z3":
       s.check_model:
         echo model
 
+  test "optimize":
+    # Pablo buys popsicles for his friends. The store sells single popsicles
+    # for $1 each, 3-popsicle boxes for $2, and 5-popsicle boxes for $3. What
+    # is the greatest number of popsicles that Pablo can buy with $8?
+    z3:
+      let s = Optimizer()
+      let a = Int "a"
+      let n = Int "n"
+      let p1 = Int "p1"
+      let p3 = Int "p3"
+      let p5 = Int "p5"
+      s.assert a == p1 * 1 + p3 * 2 + p5 * 3
+      s.assert n == p1 * 1 + p3 * 3 + p5 * 5
+      s.assert p1 >= 0 and p3 >= 0 and p5 >= 0
+      s.assert a == 8
+      s.maximize n
+      echo s
+      s.check_model:
+        echo model
+
+
+
 # vim: ft=nim
 
