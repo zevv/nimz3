@@ -75,6 +75,7 @@ from strutils import parseFloat
 from math import pow
 
 export Z3_ast
+export Z3_lbool
 
 type
 
@@ -392,6 +393,8 @@ binop(`/`, Z3_ast_int, Z3_ast_int, Z3_mk_div, helper_bin)
 binop(`*`, Z3_ast_int, Z3_ast_int, Z3_mk_mul, helper_var)
 binop(`-`, Z3_ast_int, Z3_ast_int, Z3_mk_sub, helper_var)
 uniop(`-`, Z3_ast_int, Z3_ast_int, Z3_mk_unary_minus, helper_uni)
+binop(`mod`, Z3_ast_int, Z3_ast_int, Z3_mk_mod, helper_bin)
+binop(`^`, Z3_ast_int, Z3_ast_int, Z3_mk_power, helper_bin)
 
 # Floating point operators and functions
 
