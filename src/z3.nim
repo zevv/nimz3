@@ -275,6 +275,7 @@ template z3*(code: untyped) =
     block:
       code
 
+    Z3_del_context(ctx)
 
 
 #
