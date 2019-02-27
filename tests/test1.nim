@@ -13,8 +13,8 @@ suite "z3":
       echo exp
       let s = Solver()
       s.assert (x and y) or (not x and y)
-      s.check_model:
-        echo model
+      if s.check() == Z3_L_TRUE:
+        echo s.get_model()
 
   test "tie or shirt?":
     z3:
@@ -23,8 +23,8 @@ suite "z3":
       let s = Solver()
       s.assert (not tie) or shirt
       s.assert (not tie) or not(shirt)
-      s.check_model:
-        echo model
+      if s.check() == Z3_L_TRUE:
+        echo s.get_model()
 
 
   test "math school problem":
@@ -37,8 +37,8 @@ suite "z3":
       s.assert 2 * x - 2 * y + 4 * z == -2
       s.assert x * -1 + y / 2 - z == 0
       echo s
-      s.check_model:
-        echo model
+      if s.check() == Z3_L_TRUE:
+        echo s.get_model()
 
   test "XKCD restaurant order":
 
@@ -54,8 +54,8 @@ suite "z3":
       s.assert a*215 + b*275 + c*335 + d*355 + e*420 + f*580 == 1505
       s.assert a<100 and b<100 and c<100 and d<100 and e<100 and f<100
       s.assert a>=0 and b>=0 and c>=0 and d>=0 and e>=0 and f>=0
-      s.check_model:
-        echo model
+      if s.check() == Z3_L_TRUE:
+        echo s.get_model()
 
   test "sudoku":
 
@@ -147,9 +147,9 @@ suite "z3":
       let s = Solver()
       s.assert x * 2.0 == y
       s.assert x == 15.0
-      s.check_model:
+      if s.check() == Z3_L_TRUE:
+        let model = s.get_model()
         echo eval(x)
-        echo model
 
   test "forall":
     z3:
@@ -158,8 +158,8 @@ suite "z3":
       let y = Int "y"
       s.assert y == 1
       s.assert forall([x], x * y == x)
-      s.check_model:
-        echo model
+      if s.check() == Z3_L_TRUE:
+        echo s.get_model()
 
   test "exists":
     z3:
@@ -168,8 +168,8 @@ suite "z3":
       let y = Int "y"
       s.assert y == 20
       s.assert exists([x], x * y == 180)
-      s.check_model:
-        echo model
+      if s.check() == Z3_L_TRUE:
+        echo s.get_model()
 
   test "optimize":
     # Pablo buys popsicles for his friends. The store sells single popsicles
@@ -188,8 +188,8 @@ suite "z3":
       s.assert a == 8
       s.maximize n
       echo s
-      s.check_model:
-        echo model
+      if s.check() == Z3_L_TRUE:
+        echo s.get_model()
 
 
 
