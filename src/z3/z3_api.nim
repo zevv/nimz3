@@ -391,8 +391,7 @@ proc Z3_get_smtlib_error*(c: Z3_context): Z3_string {.importc: "Z3_get_smtlib_er
 proc Z3_get_error_code*(c: Z3_context): Z3_error_code {.importc: "Z3_get_error_code", dynlib: libz3.}
 proc Z3_set_error_handler*(c: Z3_context,h: Z3_error_handler) {.importc: "Z3_set_error_handler", dynlib: libz3.}
 proc Z3_set_error*(c: Z3_context,e: Z3_error_code) {.importc: "Z3_set_error", dynlib: libz3.}
-proc Z3_get_error_msg*(err: Z3_error_code): Z3_string {.importc: "Z3_get_error_msg", dynlib: libz3.}
-proc Z3_get_error_msg_ex*(c: Z3_context,err: Z3_error_code): Z3_string {.importc: "Z3_get_error_msg_ex", dynlib: libz3.}
+proc Z3_get_error_msg*(c: Z3_context,err: Z3_error_code): Z3_string {.importc: "Z3_get_error_msg", dynlib: libz3.}
 proc Z3_get_version*(major: ptr cuint,minor: ptr cuint,build_number: ptr cuint,revision_number: ptr cuint) {.importc: "Z3_get_version", dynlib: libz3.}
 proc Z3_enable_trace*(tag: Z3_string) {.importc: "Z3_enable_trace", dynlib: libz3.}
 proc Z3_disable_trace*(tag: Z3_string) {.importc: "Z3_disable_trace", dynlib: libz3.}

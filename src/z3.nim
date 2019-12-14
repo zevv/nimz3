@@ -253,7 +253,7 @@ template evalFloat*(v: Z3_ast_any): float =
   ss[0].parseFloat * pow(2.0, ss[1].parseFloat)
 
 proc on_err(ctx: Z3_context, e: Z3_error_code) {.nimcall.} =
-  let msg = $Z3_get_error_msg_ex(ctx, e)
+  let msg = $Z3_get_error_msg(ctx, e)
   raise newException(Z3Exception, msg)
 
 
