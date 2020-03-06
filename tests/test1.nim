@@ -40,6 +40,21 @@ suite "z3":
       if s.check() == Z3_L_TRUE:
         echo s.get_model()
 
+
+  test "math school problem - bit version":
+    z3:
+      let x = Bv("x", 32)
+      letBv(32): y
+      assert not compiles(letBv(32, z))
+      letBv(32): z
+      let s = Solver()
+      s.assert 3 * x + 2 * y - z == 1
+      s.assert 2 * x - 2 * y + 4 * z == -2
+      s.assert x * -1 + y / 2 - z == 0
+      echo s
+      if s.check() == Z3_L_TRUE:
+        echo s.get_model()
+
   test "XKCD restaurant order":
 
     z3:
@@ -175,7 +190,7 @@ suite "z3":
     z3:
       let s = Solver()
       letInt x
-      letInt y
+      letInt: y
       s.assert y == 20
       s.assert exists([x], x * y == 180)
       if s.check() == Z3_L_TRUE:

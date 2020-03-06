@@ -96,20 +96,48 @@ type
 
 # Z3 type constructors
 
+from macros import treeRepr, len, del, kind, `[]`, nnkStmtList, nnkIdent, expectLen, error
 template wrapLet(fn: typed) =
   ## Wraps a variable constructor to a `let` variant that
   ## generates the whole variable declaration.
   ##
   ## .. code-block::nim
   ##   wrapLet(Int)
-  ##   letInt i    # same as: let i = Int("i")
+  ##   letInt i     # same as: let i = Int("i")
+  ##   letInt: j    # same as: let j = Int("j")
   ##   wrapLet(Bv)
-  ##   letBv b, 3  # same as: let b = Bv("b", 3)
-  macro `let fn`*(name: untyped, args: varargs[untyped]) =
+  ##   letBv(3): b  # same as: let b = Bv("b", 3)
+  macro `let fn`*(args: varargs[untyped]) =
+    assert args.len > 0
+    echo args.treeRepr
+    let lastArg = args[^1]
+    args.del(args.len - 1)
+
+    let name = if args.len == 0:
+      if lastArg.kind == nnkIdent:  # `letX i`
+        lastArg
+      elif lastArg.kind == nnkStmtList:
+        lastArg[0]                  # `letX: i`
+      else:
+        error("Bad syntax. Expected: `letTy varName` or `letTy: varName`", args)
+        nil
+    else:                           # `letX(a0, a1, ...): i
+      if lastArg.kind == nnkStmtList and
+        lastArg.len == 1 and
+        lastArg[0].kind == nnkIdent:
+        lastArg[0]
+      else:
+        error("Bad snytax. Expected: `letTy(a0, a1, ...): varName`", args)
+        nil
+    # syntax `letTy(a0, a1, ...) varName` requires `()` macros
+    # (only `()` procs work as for Nim v1.0.6)
+
     name.expectKind nnkIdent
-    template inner(name, strName, args) =
+    template inner(name, strName, args, s) =
       let name = `fn`(strName, args)
-    getAst(inner(name, name.strVal, args))
+      echo s
+    result = getAst(inner(name, name.strVal, args, result.repr))
+    echo result.repr
 
 template mk_var(name: string, ty: Z3_sort): Z3_ast =
   let sym = Z3_mk_string_symbol(ctx, name)
