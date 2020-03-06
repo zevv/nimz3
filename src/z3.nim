@@ -73,6 +73,7 @@
 import z3/z3_api
 from strutils import parseFloat
 from math import pow
+from macros import expectKind, getAst, nnkIdent, strVal
 
 export Z3_ast
 export Z3_lbool
@@ -95,6 +96,21 @@ type
 
 # Z3 type constructors
 
+template wrapLet(fn: typed) =
+  ## Wraps a variable constructor to a `let` variant that
+  ## generates the whole variable declaration.
+  ##
+  ## .. code-block::nim
+  ##   wrapLet(Int)
+  ##   letInt i    # same as: let i = Int("i")
+  ##   wrapLet(Bv)
+  ##   letBv b, 3  # same as: let b = Bv("b", 3)
+  macro `let fn`*(name: untyped, args: varargs[untyped]) =
+    name.expectKind nnkIdent
+    template inner(name, strName, args) =
+      let name = `fn`(strName, args)
+    getAst(inner(name, name.strVal, args))
+
 template mk_var(name: string, ty: Z3_sort): Z3_ast =
   let sym = Z3_mk_string_symbol(ctx, name)
   Z3_mk_const(ctx, sym, ty)
@@ -115,6 +131,10 @@ template Float*(name: string): Z3_ast_fpa =
   ## Create a Z3 constant of the type Float.
   mkvar(name, Z3_mk_fpa_sort_double(ctx)).Z3_ast_fpa
 
+wrapLet(Bool)
+wrapLet(Int)
+wrapLet(Bv)
+wrapLet(Float)
 
 
 # Stringifications
