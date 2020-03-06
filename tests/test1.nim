@@ -171,6 +171,16 @@ suite "z3":
       if s.check() == Z3_L_TRUE:
         echo s.get_model()
 
+  test "exists - let-syntax":
+    z3:
+      let s = Solver()
+      letInt x
+      letInt y
+      s.assert y == 20
+      s.assert exists([x], x * y == 180)
+      if s.check() == Z3_L_TRUE:
+        echo s.get_model()
+
   test "optimize":
     # Pablo buys popsicles for his friends. The store sells single popsicles
     # for $1 each, 3-popsicle boxes for $2, and 5-popsicle boxes for $3. What
