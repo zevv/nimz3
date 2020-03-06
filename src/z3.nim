@@ -73,7 +73,12 @@
 import z3/z3_api
 from strutils import parseFloat
 from math import pow
-from macros import expectKind, getAst, nnkIdent, strVal
+from macros import
+  kind, nnkIdent, nnkStmtList,
+  len, del, `[]`,
+  strVal,
+  getAst,
+  error
 
 export Z3_ast
 export Z3_lbool
@@ -96,10 +101,9 @@ type
 
 # Z3 type constructors
 
-from macros import treeRepr, len, del, kind, `[]`, nnkStmtList, nnkIdent, expectLen, error
-
-
 macro genLet(fn: proc, args: varargs[untyped]) =
+  ## Generates `let-call for a constructor getting name of the variable
+  ## as its first argument.
   assert args.len > 0
   let lastArg = args[^1]
   args.del(args.len - 1)
