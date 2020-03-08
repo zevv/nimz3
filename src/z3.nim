@@ -71,8 +71,17 @@
 ## For more info on Z3 check the official guide at https://rise4fun.com/z3/tutorialcontent/guide
 
 import z3/z3_api
-from strutils import parseFloat
+from sequtils import mapIt
+from strformat import fmt
+from strutils import parseFloat, join, removePrefix
 from math import pow
+from macros import
+  kind, nnkIdent, nnkSym, nnkStmtList, nnkCall, nnkArgList,
+  ident, newLit, newCommentStmtNode, newTree, copyLineInfo,
+  len, del, insert, `[]`, copy,
+  strVal, body,
+  getAst,
+  error
 
 export Z3_ast
 export Z3_lbool
@@ -95,6 +104,153 @@ type
 
 # Z3 type constructors
 
+proc popLetLastArg(letName: string, args: NimNode): NimNode =
+  ## Gets and validates the last argument of a `let`-call.
+  ## Removes it from the given list.
+  if args.len == 0:
+    error(fmt"{letName} expects arguments.")
+
+  let lastArg = args[^1]
+  args.del(args.len - 1)
+
+  proc badSyntax(got: string, expected: openArray[string]): NimNode =
+    let e = expected.mapIt("`" & it & "`")
+    let expectedStr =
+      if e.len == 1:
+        e[0]
+      else:
+        e[0..^2].join(", ") & " or " & e[^1]
+    error(
+      fmt"Bad syntax. Expected: {expectedStr}. But got: `{got}`",
+      args
+    )
+    nil
+
+  proc badSyntax0(got: string): NimNode =
+    badSyntax(got,
+      expected = @[fmt"{letName} varName", fmt"{letName}: varName"])
+  
+  proc badSyntaxN(got: string): NimNode =
+    badSyntax(got,
+      expected = @[fmt"{letName}(arg0, arg1, ...): varName"])
+
+  if args.len == 0:                        # no-arg, `letX i` or `letX: i`
+    if lastArg.kind == nnkIdent:
+      lastArg                                    # `letX i`
+    elif lastArg.kind == nnkStmtList:
+      if lastArg.len == 1 and
+        lastArg[0].kind == nnkIdent:
+        lastArg[0]                               # `letX: i`
+      else:
+        var s = lastArg.repr                     # err like `letX: i+3`
+        s.removePrefix("\n")
+        badSyntax0(fmt"{letName}: {s}")
+    else:
+      badSyntax0(fmt"{letName} {lastArg.repr}")  # err like `letX i+3`
+  else:                                    # multi-arg, `letX(...): i`
+    if lastArg.kind == nnkStmtList:
+      if lastArg.len == 1 and
+        lastArg[0].kind == nnkIdent:
+        lastArg[0]                               # `letX(...): i`
+      else:
+        var s = lastArg.repr                     # err like: `letX(...): i+3`
+        s.removePrefix("\n")
+        badSyntaxN(fmt"{letName}({args.repr}): {s}")
+    else:
+      badSyntaxN(fmt"{letName} {args.repr}, {lastArg.repr}")
+  # `letTy(arg0, arg1, ...) varName` syntax requires `()` macros
+  # (only `()` procs work as for Nim v1.0.6)
+
+
+macro genLet(fn: proc, args: varargs[untyped]) =
+  ## Generates `let`-call for a constructor getting name of the variable
+  ## as its first argument.
+  let letName = "let" & fn.strVal
+  let name = popLetLastArg(letName, args)
+  template inner(fn, name, strName, args) =
+    let name = fn(strName, args)
+  result = getAst(inner(fn.copy, name.copy, newLit(name.strVal), args))
+  result[0][0].copyLineInfo(name)
+  result[0][2][0].copyLineInfo(fn)
+
+macro wrapLet(fn: typed) =
+  ## Wraps a variable constructor to a `let` variant that
+  ## generates the whole variable declaration.
+  ##
+  ## .. code-block::nim
+  ##   wrapLet(Int)
+  ##   letInt i     # same as: let i = Int("i")
+  ##   letInt: j    # same as: let j = Int("j")
+  ##   wrapLet(Bv)
+  ##   letBv(3): b  # same as: let b = Bv("b", 3)
+  if fn.kind notin {nnkIdent, nnkSym}:
+    error(fmt"Expected a constructor to wrap but got: `{fn.repr}`", fn)
+  template inner(letFn, fn, args) =
+    template letFn*(args: varargs[untyped]) =
+      genLet(fn, args)
+  let name = fn.strVal
+  let letName = "let" & name
+  result = getAst(inner(ident(letName), fn.copy, ident("args")))
+  result[^1][0][1].copyLineInfo(fn)
+  let doc = newCommentStmtNode(
+    fmt"""
+    `{letName} x` is alias for `let x = {name}("x")`
+
+    `{letName}(...): x` is alias for `let x = {name}("x", ...)`
+    """
+  )
+  result.body.insert(0, doc)
+
+
+macro letZ3*(name: untyped, sort: untyped) =
+  ## Declares a Z3 variable of the given sort.
+  ##
+  ## The syntax is: `letZ3 name: sort`, e.g.
+  ##
+  ## .. code-block::nim
+  ##   letZ3 x: Int
+  ##   letZ3 y: Bool
+  ##   letZ3 z: Bv(3)
+  proc badSyntax(got: string, node: NimNode): NimNode {.discardable.} =
+    error(
+      fmt"Bad syntax. Expected: `letZ3 varName: sort`. Got: `" & got & "`",
+      node
+    )
+    nil
+
+  if sort.kind != nnkStmtList:
+    badSyntax(fmt"letZ3 {name.repr}, {sort.repr}", sort)
+
+  if name.kind != nnkIdent:
+    var s = sort.repr
+    s.removePrefix("\n")
+    badSyntax(fmt"letZ3 {name.repr}: {s}", name)
+
+  let sortNode = sort[0]
+  # `getAst` overwrites lineinfo of identifiers etc.
+  # copy and copyLineInfo are needed
+  if sortNode.kind == nnkIdent:   # letZ3 x: Int
+    template inner(name, nameStr, sort) =
+      let name = sort(nameStr)
+    let nameStr = newLit(name.strVal)
+    result = getAst(inner(name.copy, nameStr, sortNode.copy))
+    result[0][0].copyLineInfo(name)
+    result[0][2][0].copyLineInfo(sortNode)
+  elif sortNode.kind == nnkCall:  # letZ3 x: Bv(3)
+    template inner(name, nameStr, sort, args) =
+      let name = sort(nameStr, args)
+    let nameStr = newLit(name.strVal)
+    let sortName = sortNode[0]
+    let sortArgs = newTree(nnkArgList, sortNode[1 .. ^1])
+    result = getAst(inner(name.copy, nameStr, sortName.copy, sortArgs))
+    result[0][0].copyLineInfo(name)
+    result[0][2][0].copyLineInfo(sortNode)
+  else:  # error?
+    var s = sort.repr
+    s.removePrefix("\n")
+    badSyntax(fmt"letZ3 {name.repr}: {s}", name)
+
+
 template mk_var(name: string, ty: Z3_sort): Z3_ast =
   let sym = Z3_mk_string_symbol(ctx, name)
   Z3_mk_const(ctx, sym, ty)
@@ -115,6 +271,10 @@ template Float*(name: string): Z3_ast_fpa =
   ## Create a Z3 constant of the type Float.
   mkvar(name, Z3_mk_fpa_sort_double(ctx)).Z3_ast_fpa
 
+wrapLet(Bool)
+wrapLet(Int)
+wrapLet(Bv)
+wrapLet(Float)
 
 
 # Stringifications
