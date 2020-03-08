@@ -71,12 +71,15 @@
 ## For more info on Z3 check the official guide at https://rise4fun.com/z3/tutorialcontent/guide
 
 import z3/z3_api
-from strutils import parseFloat
+from sequtils import mapIt
+from strformat import fmt
+from strutils import parseFloat, join, removePrefix
 from math import pow
 from macros import
-  kind, nnkIdent, nnkStmtList,
-  len, del, `[]`,
-  strVal,
+  kind, nnkIdent, nnkSym, nnkStmtList,
+  ident, newLit, newCommentStmtNode,
+  len, del, insert, `[]`,
+  strVal, body,
   getAst,
   error
 
@@ -101,37 +104,74 @@ type
 
 # Z3 type constructors
 
-macro genLet(fn: proc, args: varargs[untyped]) =
-  ## Generates `let-call for a constructor getting name of the variable
-  ## as its first argument.
-  assert args.len > 0
+proc popLetLastArg(letName: string, args: NimNode): NimNode =
+  ## Gets and validates the last argument of a `let`-call.
+  ## Removes it from the given list.
+  if args.len == 0:
+    error(fmt"{letName} expects arguments.")
+
   let lastArg = args[^1]
   args.del(args.len - 1)
 
-  let name = if args.len == 0:
-    if lastArg.kind == nnkIdent:  # `letX i`
-      lastArg
+  proc badSyntax(got: string, expected: openArray[string]): NimNode =
+    let e = expected.mapIt("`" & it & "`")
+    let expectedStr =
+      if e.len == 1:
+        e[0]
+      else:
+        e[0..^2].join(", ") & " or " & e[^1]
+    error(
+      fmt"Bad syntax. Expected: {expectedStr}. But got: `{got}`",
+      args
+    )
+    nil
+
+  proc badSyntax0(got: string): NimNode =
+    badSyntax(got,
+      expected = @[fmt"{letName} varName", fmt"{letName}: varName"])
+  
+  proc badSyntaxN(got: string): NimNode =
+    badSyntax(got,
+      expected = @[fmt"{letName}(arg0, arg1, ...): varName"])
+
+  if args.len == 0:                        # no-arg, `letX i` or `letX: i`
+    if lastArg.kind == nnkIdent:
+      lastArg                                    # `letX i`
     elif lastArg.kind == nnkStmtList:
-      lastArg[0]                  # `letX: i`
+      if lastArg.len == 1 and
+        lastArg[0].kind == nnkIdent:
+        lastArg[0]                               # `letX: i`
+      else:
+        var s = lastArg.repr                     # err like `letX: i+3`
+        s.removePrefix("\n")
+        badSyntax0(fmt"{letName}: {s}")
     else:
-      error("Bad syntax. Expected: `letTy varName` or `letTy: varName`", args)
-      nil
-  else:                           # `letX(a0, a1, ...): i
-    if lastArg.kind == nnkStmtList and
-      lastArg.len == 1 and
-      lastArg[0].kind == nnkIdent:
-      lastArg[0]
+      badSyntax0(fmt"{letName} {lastArg.repr}")  # err like `letX i+3`
+  else:                                    # multi-arg, `letX(...): i`
+    if lastArg.kind == nnkStmtList:
+      if lastArg.len == 1 and
+        lastArg[0].kind == nnkIdent:
+        lastArg[0]                               # `letX(...): i`
+      else:
+        var s = lastArg.repr                     # err like: `letX(...): i+3`
+        s.removePrefix("\n")
+        badSyntaxN(fmt"{letName}({args.repr}): {s}")
     else:
-      error("tBad snytax. Expected: `letTy(a0, a1, ...): varName`", args)
-      nil
-  # syntax `letTy(a0, a1, ...) varName` requires `()` macros
+      badSyntaxN(fmt"{letName} {args.repr}, {lastArg.repr}")
+  # `letTy(arg0, arg1, ...) varName` syntax requires `()` macros
   # (only `()` procs work as for Nim v1.0.6)
 
+
+macro genLet(fn: proc, args: varargs[untyped]) =
+  ## Generates `let`-call for a constructor getting name of the variable
+  ## as its first argument.
+  let letName = "let" & fn.strVal
+  let name = popLetLastArg(letName, args)
   template inner(fn, name, strName, args) =
     let name = fn(strName, args)
   result = getAst(inner(fn, name, name.strVal, args))
 
-template wrapLet(fn: typed) =
+macro wrapLet(fn: typed) =
   ## Wraps a variable constructor to a `let` variant that
   ## generates the whole variable declaration.
   ##
@@ -141,8 +181,22 @@ template wrapLet(fn: typed) =
   ##   letInt: j    # same as: let j = Int("j")
   ##   wrapLet(Bv)
   ##   letBv(3): b  # same as: let b = Bv("b", 3)
-  template `let fn`*(args: varargs[untyped]) =
-    genLet(fn, args)
+  if fn.kind notin {nnkIdent, nnkSym}:
+    error(fmt"Expected a constructor to wrap but got: `{fn.repr}`", fn)
+  template inner(letFn, fn, args) =
+    template letFn*(args: varargs[untyped]) =
+      genLet(fn, args)
+  let name = fn.strVal
+  let letName = "let" & name
+  result = getAst(inner(ident(letName), fn, ident("args")))
+  let doc = newCommentStmtNode(
+    fmt"""
+    `{letName} x` is alias for `let x = {name}("x")`
+
+    `{letName}(...): x` is alias for `let x = {name}("x", ...)`
+    """
+  )
+  result.body.insert(0, doc)
 
 template mk_var(name: string, ty: Z3_sort): Z3_ast =
   let sym = Z3_mk_string_symbol(ctx, name)
