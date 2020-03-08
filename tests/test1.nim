@@ -45,8 +45,14 @@ suite "z3":
     z3:
       let x = Bv("x", 32)
       letBv(32): y
-      assert not compiles(letBv(32, z))
-      letBv(32): z
+      assert not compiles((letBv(32, q)))
+      assert not compiles((letBv("32"): q))
+      assert not compiles((letBv(x = 32): q))
+      letZ3 z: Bv(32)
+      assert not compiles((letZ3 q: Bv(32, 4)))
+      assert not compiles((letZ3 q: Bv("32")))
+      assert not compiles((letZ3 q: Bv(x = 32)))
+      assert not compiles((letZ3 q: BvX))
       let s = Solver()
       s.assert 3 * x + 2 * y - z == 1
       s.assert 2 * x - 2 * y + 4 * z == -2
@@ -189,8 +195,8 @@ suite "z3":
   test "exists - let-syntax":
     z3:
       let s = Solver()
-      letInt x
-      letInt: y
+      letInt: x
+      letZ3 y: Int
       s.assert y == 20
       s.assert exists([x], x * y == 180)
       if s.check() == Z3_L_TRUE:

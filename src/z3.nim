@@ -76,8 +76,8 @@ from strformat import fmt
 from strutils import parseFloat, join, removePrefix
 from math import pow
 from macros import
-  kind, nnkIdent, nnkSym, nnkStmtList,
-  ident, newLit, newCommentStmtNode,
+  kind, nnkIdent, nnkSym, nnkStmtList, nnkCall, nnkArgList,
+  ident, newLit, newCommentStmtNode, newTree,
   len, del, insert, `[]`,
   strVal, body,
   getAst,
@@ -197,6 +197,49 @@ macro wrapLet(fn: typed) =
     """
   )
   result.body.insert(0, doc)
+
+macro letZ3*(name: untyped, sort: untyped) =
+  ## Declares a Z3 variable of the given sort.
+  ##
+  ## The syntax is: `letZ3 name: sort`, e.g.
+  ##
+  ## .. code-block::nim
+  ##   letZ3 x: Int
+  ##   letZ3 y: Bool
+  ##   letZ3 z: Bv(3)
+  proc badSyntax(got: string, node: NimNode): NimNode {.discardable.} =
+    error(
+      fmt"Bad syntax. Expected: `letZ3 varName: sort`. Got: `" & got & "`",
+      node
+    )
+    nil
+
+  if sort.kind != nnkStmtList:
+    badSyntax(fmt"letZ3 {name.repr}, {sort.repr}", sort)
+
+  if name.kind != nnkIdent:
+    var s = sort.repr
+    s.removePrefix("\n")
+    badSyntax(fmt"letZ3 {name.repr}: {s}", name)
+
+  let sortNode = sort[0]
+  if sortNode.kind == nnkIdent:   # letZ3 x: Int
+    template inner(name, nameStr, sort) =
+      let name = sort(nameStr)
+    let nameStr = newLit(name.strVal)
+    result = getAst(inner(name, nameStr, sortNode))
+  elif sortNode.kind == nnkCall:  # letZ3 x: Bv(3)
+    template inner(name, nameStr, sort, args) =
+      let name = sort(nameStr, args)
+    let nameStr = newLit(name.strVal)
+    let sortName = sortNode[0]
+    let sortArgs = newTree(nnkArgList, sortNode[1 .. ^1])
+    result = getAst(inner(name, nameStr, sortName, sortArgs))
+  else:  # error?
+    var s = sort.repr
+    s.removePrefix("\n")
+    badSyntax(fmt"letZ3 {name.repr}: {s}", name)
+
 
 template mk_var(name: string, ty: Z3_sort): Z3_ast =
   let sym = Z3_mk_string_symbol(ctx, name)
