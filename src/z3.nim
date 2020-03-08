@@ -77,8 +77,8 @@ from strutils import parseFloat, join, removePrefix
 from math import pow
 from macros import
   kind, nnkIdent, nnkSym, nnkStmtList, nnkCall, nnkArgList,
-  ident, newLit, newCommentStmtNode, newTree,
-  len, del, insert, `[]`,
+  ident, newLit, newCommentStmtNode, newTree, copyLineInfo,
+  len, del, insert, `[]`, copy,
   strVal, body,
   getAst,
   error
@@ -169,7 +169,9 @@ macro genLet(fn: proc, args: varargs[untyped]) =
   let name = popLetLastArg(letName, args)
   template inner(fn, name, strName, args) =
     let name = fn(strName, args)
-  result = getAst(inner(fn, name, name.strVal, args))
+  result = getAst(inner(fn.copy, name.copy, newLit(name.strVal), args))
+  result[0][0].copyLineInfo(name)
+  result[0][2][0].copyLineInfo(fn)
 
 macro wrapLet(fn: typed) =
   ## Wraps a variable constructor to a `let` variant that
@@ -188,7 +190,8 @@ macro wrapLet(fn: typed) =
       genLet(fn, args)
   let name = fn.strVal
   let letName = "let" & name
-  result = getAst(inner(ident(letName), fn, ident("args")))
+  result = getAst(inner(ident(letName), fn.copy, ident("args")))
+  result[^1][0][1].copyLineInfo(fn)
   let doc = newCommentStmtNode(
     fmt"""
     `{letName} x` is alias for `let x = {name}("x")`
@@ -197,6 +200,7 @@ macro wrapLet(fn: typed) =
     """
   )
   result.body.insert(0, doc)
+
 
 macro letZ3*(name: untyped, sort: untyped) =
   ## Declares a Z3 variable of the given sort.
@@ -223,18 +227,24 @@ macro letZ3*(name: untyped, sort: untyped) =
     badSyntax(fmt"letZ3 {name.repr}: {s}", name)
 
   let sortNode = sort[0]
+  # `getAst` overwrites lineinfo of identifiers etc.
+  # copy and copyLineInfo are needed
   if sortNode.kind == nnkIdent:   # letZ3 x: Int
     template inner(name, nameStr, sort) =
       let name = sort(nameStr)
     let nameStr = newLit(name.strVal)
-    result = getAst(inner(name, nameStr, sortNode))
+    result = getAst(inner(name.copy, nameStr, sortNode.copy))
+    result[0][0].copyLineInfo(name)
+    result[0][2][0].copyLineInfo(sortNode)
   elif sortNode.kind == nnkCall:  # letZ3 x: Bv(3)
     template inner(name, nameStr, sort, args) =
       let name = sort(nameStr, args)
     let nameStr = newLit(name.strVal)
     let sortName = sortNode[0]
     let sortArgs = newTree(nnkArgList, sortNode[1 .. ^1])
-    result = getAst(inner(name, nameStr, sortName, sortArgs))
+    result = getAst(inner(name.copy, nameStr, sortName.copy, sortArgs))
+    result[0][0].copyLineInfo(name)
+    result[0][2][0].copyLineInfo(sortNode)
   else:  # error?
     var s = sort.repr
     s.removePrefix("\n")
