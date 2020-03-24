@@ -18,7 +18,7 @@ converter enumToInt(en: Z3_ast_print_mode): int {.used.} = en.int
 type Z3_goal_prec* = distinct int
 converter enumToInt(en: Z3_goal_prec): int {.used.} = en.int
 
-type 
+type
   Z3_lbool* = enum
     Z3_L_FALSE = -1,
     Z3_L_UNDEF = 0,
@@ -54,7 +54,7 @@ type
     Z3_UNKNOWN_SORT = 1000
 
 const
-  libz3 = "libz3.so"
+  libz3 = when defined(windows): "libz3.dll" else: "libz3.so"
   STDC_PREDEF_H* = 1
   STDC_IEC_559* = 1
   STDC_IEC_559_COMPLEX* = 1
