@@ -22,8 +22,8 @@
 ## `Z3_mk_bvadd`.
 ##
 ## This Nim binding allows the usage of native operators, so the user can simply
-## use the `+` operator instead of `Z3_mk_add`. For this reason, Nim needs to keep 
-## track of the underlying Z3 node sort for each Z3 ast node. Other API's like the 
+## use the `+` operator instead of `Z3_mk_add`. For this reason, Nim needs to keep
+## track of the underlying Z3 node sort for each Z3 ast node. Other API's like the
 ## Python binding do this by wrapping each `Z3_ast` node in an external object, and
 ## provide methods applying to these objects. This Nim binding uses distinct
 ## types instead: for each Z3 node sort, there is a matching Nim type provided of
@@ -358,6 +358,7 @@ binop(`or`, Z3_ast_bool, Z3_ast_bool, Z3_mk_or, helper_var)
 binop(`xor`, Z3_ast_bool, Z3_ast_bool, Z3_mk_xor, helper_bin)
 binop(`==`, Z3_ast_bool, Z3_ast_bool, Z3_mk_eq, helper_bin)
 binop(`<->`, Z3_ast_bool, Z3_ast_bool, Z3_mk_iff, helper_bin)
+binop(`->`, Z3_ast_bool, Z3_ast_bool, Z3_mk_implies, helper_bin)
 uniop(`not`, Z3_ast_bool, Z3_ast_bool, Z3_mk_not, helper_uni)
 
 # Bit vector operators and functions
