@@ -435,19 +435,23 @@ template ite*[T](v1: bool|Z3_ast_bool, v2, v3: T): T =
   T(Z3_mk_ite(ctx, to_Z3_ast(ctx, v1), to_Z3_ast(ctx, v2), to_Z3_ast(ctx, v3)))
 
 template exists*(vs: openarray[Z3_ast_any], body: Z3_ast_bool): Z3_ast_bool =
+  # Create an exists formula
   var bound: seq[Z3_app]
   for v in vs: bound.add Z3_to_app(ctx, v.Z3_ast)
   Z3_mk_exists_const(ctx, 0, bound.len.cuint, addr(bound[0]), 0, nil, body.Z3_ast).Z3_ast_bool
 
 template ∃*(vs: openarray[Z3_ast_any], body: Z3_ast_bool): Z3_ast_bool =
+  # Create an exists formula
   exists(vs, body)
 
 template forall*(vs: openarray[Z3_ast_any], body: Z3_ast_bool): Z3_ast_bool =
+  # Create an forall formula
   var bound: seq[Z3_app]
   for v in vs: bound.add Z3_to_app(ctx, v.Z3_ast)
   Z3_mk_forall_const(ctx, 0, bound.len.cuint, addr(bound[0]), 0, nil, body.Z3_ast).Z3_ast_bool
 
 template ∀*(vs: openarray[Z3_ast_any], body: Z3_ast_bool): Z3_ast_bool =
+  # Create an forall formula
   forall(vs, body)
 
 # vim: ft=nim
