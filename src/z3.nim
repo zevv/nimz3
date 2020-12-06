@@ -409,10 +409,10 @@ binop(`^`, Z3_ast_int, Z3_ast_int, Z3_mk_power, helper_bin)
 # Floating point operators and functions
 
 binop(`==`, Z3_ast_fpa, Z3_ast_bool, Z3_mk_eq, helper_bin)
-binop(`>=`, Z3_ast_fpa, Z3_ast_bool, Z3_mk_fpa_ge, helper_bin)
+binop(`>=`, Z3_ast_fpa, Z3_ast_bool, Z3_mk_fpa_geq, helper_bin)
 binop(`>`, Z3_ast_fpa, Z3_ast_bool, Z3_mk_fpa_gt, helper_bin)
 binop(`<->`, Z3_ast_fpa, Z3_ast_bool, Z3_mk_fpa_iff, helper_bin)
-binop(`<=`, Z3_ast_fpa, Z3_ast_bool, Z3_mk_fpa_le, helper_bin)
+binop(`<=`, Z3_ast_fpa, Z3_ast_bool, Z3_mk_fpa_leq, helper_bin)
 binop(`<`, Z3_ast_fpa, Z3_ast_bool, Z3_mk_fpa_lt, helper_bin)
 binop(`<->`, Z3_ast_fpa, Z3_ast_bool, Z3_mk_iff, helper_bin)
 binop(`+`, Z3_ast_fpa, Z3_ast_fpa, Z3_mk_fpa_add, helper_bin_fpa)
