@@ -171,6 +171,36 @@ suite "z3":
       if s.check() == Z3_L_TRUE:
         echo s.get_model()
 
+  test "planetary/epicyclic gear system":
+    # Find the gear tooth count for a planetary gear system with a
+    # ratio of 1:12
+
+    z3:
+      let R = Int("R") # ring teeth
+      let S = Int("S") # sun teeth
+      let P = Int("P") # planet teeth
+
+      let Tr = Int("Tr")  # ring turns
+      let Ts = Int("Ts")  # sun turns
+      let Ty = Int("Ty")  # carrier turns
+
+      let s = Solver()
+
+      s.assert Ts == 12    # Sun speed
+      s.assert Tr == 0     # Ring speed
+      s.assert Ty == 1     # Y-carrier speed
+
+      s.assert R >= 10 # Don't make gears too small
+      s.assert P >= 10
+      s.assert S >= 10
+
+      # Planetary gears constraints
+      s.assert (R + S) * Ty == R * Tr + Ts * S
+      s.assert R == 2 * P + S
+
+      s.check_model:
+        echo model
+
 when false: # This test fails with never versions of Z3.
 
   test "optimize":
@@ -192,8 +222,6 @@ when false: # This test fails with never versions of Z3.
       echo s
       if s.check() == Z3_L_TRUE:
         echo s.get_model()
-
-
 
 # vim: ft=nim
 
