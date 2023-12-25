@@ -292,19 +292,19 @@ template checkKind(ctx: Z3_context, kinds: set[Z3_sort_kind], typ: string) =
 proc to_Z3_ast(ctx: Z3_context, v: Z3_ast_any): Z3_ast =
   v.Z3_ast
 
-proc to_Z3_ast(ctx: Z3_context, v: bool, sort: Z3_sort = nil): Z3_ast =
+proc to_Z3_ast(ctx: Z3_context, v: bool, sort: Z3_sort = nil.Z3_sort): Z3_ast =
   checkKind ctx, {Z3_BOOL_SORT}, "integer"
   if v: Z3_mk_true(ctx) else: Z3_mk_false(ctx)
 
-proc to_Z3_ast(ctx: Z3_context, v: SomeInteger, sort: Z3_sort = nil): Z3_ast =
+proc to_Z3_ast(ctx: Z3_context, v: SomeInteger, sort: Z3_sort = nil.Z3_sort): Z3_ast =
   checkKind ctx, {Z3_INT_SORT,Z3_BV_SORT}, "integer"
   Z3_mk_int64(ctx, v.clonglong, sort)
 
-proc to_Z3_ast(ctx: Z3_context, v: float, sort: Z3_sort = nil): Z3_ast =
+proc to_Z3_ast(ctx: Z3_context, v: float, sort: Z3_sort = nil.Z3_sort): Z3_ast =
   checkKind ctx, {Z3_FLOATING_POINT_SORT}, "integer"
   Z3_mk_fpa_numeral_double(ctx, v.cdouble, sort)
 
-proc to_Z3_ast(ctx: Z3_context, v: string, sort: Z3_sort = nil): Z3_ast =
+proc to_Z3_ast(ctx: Z3_context, v: string, sort: Z3_sort = nil.Z3_sort): Z3_ast =
   Z3_mk_numeral(ctx, v, sort)
 
 
